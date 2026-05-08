@@ -67,7 +67,7 @@ RULE: ONLY answer using this data. Refuse to answer outside questions. Be concis
       if (response.status === 503) {
         return res.status(503).json({ error: 'Model is currently loading, please try again in a minute.', is_loading: true });
       }
-      return res.status(response.status).json({ error: 'Failed to fetch AI response' });
+      return res.status(response.status).json({ error: 'Failed to fetch AI response', details: err });
     }
 
     const data = await response.json();
