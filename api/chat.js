@@ -28,27 +28,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid messages format' });
     }
 
-    // Construct the prompt for Mistral Instruct
-    // System instruction injected into the first user message or prepended
-    const systemInstruction = `You are a helpful AI assistant for a dashboard. The current dashboard data is: ${JSON.stringify(dashboardData)}. 
-RULE: You must ONLY answer using this dashboard data. If a user asks something not present in the data, politely refuse to answer and tell them you can only answer questions about the dashboard data. Do not guess or use outside knowledge. Answer concisely.`;
+    const systemInstruction = `You are an AI for a dashboard. The dashboard data is: ${JSON.stringify(dashboardData)}. 
+RULE: ONLY answer using this data. Refuse to answer outside questions. Be concise.`;
 
-    // Mistral Instruct format: <s>[INST] Instruction [/INST] Model answer</s>[INST] Follow-up instruction [/INST]
-    let prompt = `<s>[INST] ${systemInstruction}\n\n`;
-    
-    messages.forEach((msg, idx) => {
-      if (msg.role === 'user') {
-        if (idx === 0) {
-          prompt += `${msg.content} [/INST]`;
-        } else {
-          prompt += `[INST] ${msg.content} [/INST]`;
-        }
-      } else {
-        prompt += ` ${msg.content} </s>`;
-      }
-    });
+    const promptMessages = [
+      { role: 'system', content: systemInstruction },
+      ...messages
+    ];
 
-    const url = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2';
+    const url = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
     
     const response = await fetch(url, {
       method: 'POST',
@@ -57,19 +45,16 @@ RULE: You must ONLY answer using this dashboard data. If a user asks something n
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 250,
-          return_full_text: false,
-          temperature: 0.1, // Low temperature since we want factual answers based on data
-        }
+        model: "Qwen/Qwen2.5-72B-Instruct",
+        messages: promptMessages,
+        max_tokens: 200,
+        temperature: 0.1
       })
     });
 
     if (!response.ok) {
       const err = await response.text();
       console.error('Hugging Face API Error:', err);
-      // Wait for model to load if needed
       if (response.status === 503) {
         return res.status(503).json({ error: 'Model is currently loading, please try again in a minute.', is_loading: true });
       }
@@ -77,7 +62,7 @@ RULE: You must ONLY answer using this dashboard data. If a user asks something n
     }
 
     const data = await response.json();
-    let generatedText = data[0]?.generated_text || '';
+    let generatedText = data.choices?.[0]?.message?.content || '';
     
     res.status(200).json({ response: generatedText.trim() });
   } catch (error) {
