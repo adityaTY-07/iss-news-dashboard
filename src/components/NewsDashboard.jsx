@@ -84,41 +84,37 @@ const NewsDashboard = ({ news, setNews }) => {
 
   return (
     <div className="bg-card border rounded-xl shadow-sm flex flex-col flex-1 overflow-hidden h-[450px]">
-      <div className="p-4 border-b flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-        <div className="flex items-center gap-2">
-          <Newspaper className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold">Latest News</h3>
+      <div className="p-4 border-b flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-bold">Breaking News</h3>
+          <button 
+            onClick={() => fetchNews(true)}
+            className="px-4 py-1.5 bg-card border rounded-full text-sm font-medium hover:bg-muted transition-colors text-muted-foreground shadow-sm flex items-center gap-2"
+          >
+            Refresh
+          </button>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
             <input 
               type="text" 
-              placeholder="Search news..." 
+              placeholder="Search title, source, author..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-1.5 text-sm bg-muted border rounded-full focus:outline-none focus:ring-2 focus:ring-primary w-[150px] transition-all"
+              className="w-full px-4 py-2 text-sm bg-background border rounded-full focus:outline-none focus:ring-2 focus:ring-primary transition-all"
             />
           </div>
           
           <select 
             value={category} 
             onChange={(e) => setCategory(e.target.value)}
-            className="text-sm bg-muted border rounded-full px-3 py-1.5 focus:outline-none"
+            className="text-sm bg-background border rounded-full px-4 py-2 focus:outline-none min-w-[140px]"
           >
-            <option value="science">Science</option>
+            <option value="science">Sort by Date</option>
             <option value="technology">Tech</option>
             <option value="general">General</option>
           </select>
-
-          <button 
-            onClick={() => fetchNews(true)}
-            className="p-1.5 bg-secondary text-secondary-foreground rounded-full hover:bg-secondary/80 transition-colors"
-            title="Refresh News"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
         </div>
       </div>
 
@@ -144,10 +140,13 @@ const NewsDashboard = ({ news, setNews }) => {
             ))}
           </div>
         ) : (
-          filteredNews.slice(0, 5).map((article, idx) => ( // Show 5 as requested
+          filteredNews.slice(0, 5).map((article, idx) => ( 
             <div key={idx} className="flex flex-col sm:flex-row gap-4 group">
               {article.urlToImage && (
-                <div className="w-full sm:w-32 h-32 sm:h-24 shrink-0 overflow-hidden rounded-lg">
+                <div className="w-full sm:w-24 h-24 shrink-0 overflow-hidden rounded-xl relative">
+                  <div className="absolute top-1 left-1 w-5 h-5 bg-[#ef4444] text-white text-[10px] font-bold rounded-full flex items-center justify-center z-10 shadow-sm border border-card">
+                    {idx + 1}
+                  </div>
                   <img 
                     src={article.urlToImage} 
                     alt={article.title} 
@@ -156,28 +155,25 @@ const NewsDashboard = ({ news, setNews }) => {
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#0ea5e9]">
                     {article.source.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {article.publishedAt ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true }) : ''}
+                  <span className="text-[10px] text-muted-foreground">
+                    {article.publishedAt ? new Date(article.publishedAt).toLocaleString() : ''}
                   </span>
                 </div>
-                <h4 className="font-semibold text-sm sm:text-base leading-tight mb-2 line-clamp-2">
+                <h4 className="font-bold text-sm leading-tight mb-2 line-clamp-2">
                   {article.title}
                 </h4>
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                  {article.description}
-                </p>
                 <a 
                   href={article.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Read More <ExternalLink className="w-3 h-3" />
+                  READ MORE
                 </a>
               </div>
             </div>

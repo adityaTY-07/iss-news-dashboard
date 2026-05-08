@@ -1,71 +1,26 @@
-import React, { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import React from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ffc658'];
-
-const Charts = ({ speedHistory, news }) => {
-  // Aggregate news by source
-  const newsDist = useMemo(() => {
-    if (!news || news.length === 0) return [];
-    const dist = {};
-    news.forEach(item => {
-      const source = item.source?.name || 'Unknown';
-      dist[source] = (dist[source] || 0) + 1;
-    });
-    return Object.keys(dist).map(key => ({ name: key, value: dist[key] }));
-  }, [news]);
-
+const Charts = ({ speedHistory }) => {
   return (
-    <>
-      <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col h-full">
-        <h3 className="text-lg font-semibold mb-4">ISS Speed (km/h)</h3>
-        <div className="flex-1 min-h-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={speedHistory}>
-              <XAxis dataKey="time" hide />
-              <YAxis domain={['auto', 'auto']} width={60} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-                itemStyle={{ color: 'hsl(var(--primary))' }}
-              />
-              <Line type="monotone" dataKey="speed" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+    <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col h-[350px]">
+      <h3 className="text-lg font-bold mb-4">ISS Speed Trend</h3>
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={speedHistory} margin={{ top: 5, right: 20, left: 0, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+            <XAxis dataKey="time" angle={-45} textAnchor="end" height={60} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+            <YAxis domain={['auto', 'auto']} width={60} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))', borderRadius: '8px' }}
+              itemStyle={{ color: '#ef4444', fontWeight: 'bold' }}
+              labelStyle={{ color: 'hsl(var(--muted-foreground))', fontSize: '12px' }}
+            />
+            <Line type="monotone" dataKey="speed" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
-
-      <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col h-full">
-        <h3 className="text-lg font-semibold mb-4">News by Source</h3>
-        <div className="flex-1 min-h-0">
-          {newsDist.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={newsDist}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {newsDist.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-              No news data available
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 

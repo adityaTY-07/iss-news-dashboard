@@ -129,7 +129,7 @@ RULE: ONLY answer using this data. Refuse to answer outside questions. Be concis
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50 ${isOpen ? 'hidden' : ''}`}
+        className={`fixed bottom-6 right-6 w-14 h-14 bg-red-500 text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50 ${isOpen ? 'hidden' : ''}`}
       >
         <MessageSquare className="w-6 h-6" />
       </button>

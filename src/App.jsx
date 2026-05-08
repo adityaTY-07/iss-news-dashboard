@@ -15,6 +15,8 @@ function App() {
   const [news, setNews] = useState([]);
   const [locationName, setLocationName] = useState('Loading...');
 
+  const [autoRefresh, setAutoRefresh] = useState(true);
+
   // Toggle Dark Mode
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
@@ -70,15 +72,15 @@ function App() {
           return { lat, lon, timestamp, speed: data.speed || 0 };
         });
 
-        setIssHistory(h => [...h, [lat, lon]].slice(-15));
+        setIssHistory(h => [...h, [lat, lon]].slice(-50)); // Keep up to 50 for the tracked positions UI
 
         // Reverse Geocoding
         try {
           const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
           const geoData = await geoRes.json();
-          setLocationName(geoData.city || geoData.locality || geoData.principalSubdivision || 'Ocean / Unknown');
+          setLocationName(geoData.city || geoData.locality || geoData.principalSubdivision || 'Over ocean / remote area');
         } catch (e) {
-          setLocationName('Ocean');
+          setLocationName('Over ocean / remote area');
         }
       }
     } catch (error) {
@@ -101,70 +103,92 @@ function App() {
   useEffect(() => {
     fetchISSLocation();
     fetchAstronauts();
-    const interval = setInterval(fetchISSLocation, 15000);
-    return () => clearInterval(interval);
-  }, [fetchISSLocation]);
+    if (autoRefresh) {
+      const interval = setInterval(fetchISSLocation, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchISSLocation, autoRefresh]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 p-4 md:p-8">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b pb-4">
-        <div className="flex items-center gap-3">
-          <Satellite className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-            Nexus Dashboard
-          </h1>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 p-4 md:p-8 font-sans">
+      
+      {/* Header Card */}
+      <header className="bg-card border rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center shadow-sm">
+        <div>
+          <p className="text-xs font-bold text-[#0ea5e9] tracking-widest mb-1 uppercase">Mission Control Dashboard</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Real-Time ISS and News Intelligence</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={fetchISSLocation}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh ISS
-          </button>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-          >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-        </div>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="mt-4 md:mt-0 px-4 py-2 border rounded-full text-sm font-medium hover:bg-muted transition-colors text-muted-foreground"
+        >
+          {darkMode ? 'Switch to Light' : 'Switch to Dark'}
+        </button>
       </header>
 
       {/* Main Grid Layout */}
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column: ISS Tracker & Map */}
+        {/* Left Column: ISS Tracker & News */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Map Card */}
-          <div className="bg-card border rounded-xl overflow-hidden shadow-sm h-[400px] flex flex-col relative">
-             <div className="absolute top-4 left-4 z-[400] bg-background/80 backdrop-blur p-3 rounded-lg border shadow-sm pointer-events-none">
-                <p className="text-sm font-semibold text-muted-foreground">Current Location</p>
-                <p className="text-lg font-bold">{locationName}</p>
-                {issData && (
-                  <div className="flex gap-4 mt-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Lat:</span> {issData.lat.toFixed(4)}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Lon:</span> {issData.lon.toFixed(4)}
-                    </div>
-                  </div>
-                )}
-             </div>
-             <ISSMap issData={issData} history={issHistory} />
-          </div>
+          
+          {/* Tracking Section */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+              <h2 className="text-lg font-bold">ISS Live Tracking</h2>
+              <div className="flex items-center gap-3 mt-2 sm:mt-0">
+                <button 
+                  onClick={fetchISSLocation}
+                  className="px-4 py-1.5 bg-card border rounded-full text-sm font-medium hover:bg-muted transition-colors text-muted-foreground shadow-sm"
+                >
+                  Refresh Now
+                </button>
+                <button 
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className={`px-4 py-1.5 border rounded-full text-sm font-medium transition-colors shadow-sm ${autoRefresh ? 'bg-background border-muted-foreground/30 text-foreground' : 'bg-card text-muted-foreground'}`}
+                >
+                  Auto-Refresh: {autoRefresh ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            </div>
 
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[300px]">
-             <Charts speedHistory={speedHistory} news={news} />
-          </div>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                <p className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Latitude / Longitude</p>
+                <p className="font-bold text-lg">{issData ? `${issData.lat.toFixed(3)}, ${issData.lon.toFixed(3)}` : '--'}</p>
+              </div>
+              <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                <p className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Speed</p>
+                <p className="font-bold text-lg">{issData ? `${issData.speed.toFixed(2)} km/h` : '--'}</p>
+              </div>
+              <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                <p className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Nearest Place</p>
+                <p className="font-bold text-sm leading-tight line-clamp-2">{locationName}</p>
+              </div>
+              <div className="bg-card border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                <p className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Tracked Positions</p>
+                <p className="font-bold text-lg">{issHistory.length}</p>
+              </div>
+            </div>
+
+            {/* Map */}
+            <div className="bg-card border rounded-xl overflow-hidden shadow-sm h-[400px]">
+              <ISSMap issData={issData} history={issHistory} />
+            </div>
+          </section>
+
+          {/* News Section */}
+          <section>
+            <NewsDashboard news={news} setNews={setNews} />
+          </section>
+
         </div>
 
-        {/* Right Column: News & Astros */}
-        <div className="space-y-6 flex flex-col h-full">
+        {/* Right Column: Charts & Astros */}
+        <div className="lg:col-span-1 space-y-6 flex flex-col">
+           <Charts speedHistory={speedHistory} />
            <AstronautsList astronauts={astronauts} />
-           <NewsDashboard news={news} setNews={setNews} />
         </div>
 
       </main>
