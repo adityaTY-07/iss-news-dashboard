@@ -22,10 +22,19 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing VITE_AI_TOKEN environment variable' });
     }
 
-    const { messages, dashboardData } = req.body;
+    let parsedBody = req.body;
+    if (typeof req.body === 'string') {
+      try {
+        parsedBody = JSON.parse(req.body);
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid JSON body' });
+      }
+    }
+
+    const { messages, dashboardData } = parsedBody || {};
     
     if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Invalid messages format' });
+      return res.status(400).json({ error: 'Invalid messages format: ' + typeof messages });
     }
 
     const systemInstruction = `You are an AI for a dashboard. The dashboard data is: ${JSON.stringify(dashboardData)}. 

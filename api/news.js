@@ -14,22 +14,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.VITE_NEWS_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Missing VITE_NEWS_API_KEY environment variable' });
-    }
-
-    // Default parameters
-    const category = req.query.category || 'general';
-    const pageSize = 10;
-    
-    // NewsAPI endpoint
-    const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&pageSize=${pageSize}&apiKey=${apiKey}`;
+    // We use Spaceflight News API which is free, requires no auth, and perfectly fits the theme!
+    // It also bypasses the strict CORS and Vercel IP blocking from NewsAPI.org
+    const url = `https://api.spaceflightnewsapi.net/v4/articles/?limit=10`;
     
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Spaceflight API returned " + response.status);
+    }
+    
     const data = await response.json();
     
-    res.status(200).json(data);
+    // Map to NewsAPI format so the frontend doesn't need to change
+    const mappedArticles = data.results.map(article => ({
+      title: article.title,
+      description: article.summary,
+      url: article.url,
+      urlToImage: article.image_url,
+      publishedAt: article.published_at,
+      source: { name: article.news_site }
+    }));
+    
+    res.status(200).json({ status: "ok", articles: mappedArticles });
   } catch (error) {
     console.error('Error fetching news:', error);
     res.status(500).json({ error: 'Failed to fetch news' });
