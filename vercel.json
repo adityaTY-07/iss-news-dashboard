@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/hf-api/(.*)",
+      "destination": "https://router.huggingface.co/$1"
+    },
+    {
+      "source": "/open-notify/(.*)",
+      "destination": "http://api.open-notify.org/$1"
+    }
+  ]
+}
