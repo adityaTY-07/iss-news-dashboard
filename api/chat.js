@@ -46,8 +46,11 @@ RULE: ONLY answer using this data. Refuse to answer outside questions. Be concis
     ];
 
     const url = 'https://router.huggingface.co/hf-inference/v1/chat/completions';
+    // Actually, looking at the proxy, it just hits /v1/chat/completions on router.huggingface.co
+    // But let's use the explicit model URL just to be absolutely safe and standard:
+    const realUrl = 'https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions';
     
-    const response = await fetch(url, {
+    const response = await fetch(realUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${aiToken}`,
